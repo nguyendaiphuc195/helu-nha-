@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ILU</title>
+    <style>
+        body {
+            text-align: center;
+            font-family: 'Comic Sans MS', 'Arial Rounded MT Bold', Arial, sans-serif;
+            font-weight: bold;
+            overflow: hidden;
+            position: relative;
+            height: 100vh;
+            margin: 0;
+        }
+        #backgroundVideo {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            object-fit: cover;
+            object-position: top;
+        }
+        .container, .intro, .end {
+            margin-top: 50px;
+            transition: opacity 0.5s ease, transform 0.5s ease;
+        }
+        .intro, .end {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            width: 100vw;
+        }
+        .intro h1 {
+            font-size: 150px;
+            margin-bottom: 20px;
+            color: white;
+            text-shadow: 4px 4px 8px black;
+        }
+        .thank-you {
+            font-size: 100px;
+            margin-bottom: 20px;
+        }
+        .question {
+            font-size: 100px;
+            margin-bottom: 20px;
+            color: white;
+            text-shadow: 4px 4px 8px black;
+        }
+        .buttons {
+            display: flex;
+            justify-content: space-around;
+            margin-top: 20px;
+        }
+        button {
+            font-size: 20px;
+            padding: 10px 20px;
+            border: none;
+            cursor: pointer;
+            border-radius: 20px;
+            transition: all 0.3s ease;
+            font-weight: bold;
+            font-family: 'Comic Sans MS', 'Arial Rounded MT Bold', Arial, sans-serif;
+        }
+        button:hover {
+            transform: scale(1.1);
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+        }
+        #yes, #no {
+            background-color: lightgreen;
+            font-size: 20px;
+            padding: 10px 20px;
+            transition: all 0.5s ease;
+            position: absolute;
+            border-radius: 20px;
+        }
+        #no {
+            background-color: lightcoral;
+            transition: left 0.3s ease, top 0.3s ease;
+        }
+        @keyframes lightEffect {
+            0% { box-shadow: 0 0 10px rgba(255, 255, 0, 0.5); }
+            50% { box-shadow: 0 0 30px rgba(255, 255, 0, 0.8); }
+            100% { box-shadow: 0 0 10px rgba(255, 255, 0, 0.5); }
+        }
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            50% { transform: translateX(5px); }
+            75% { transform: translateX(-5px); }
+        }
+        @keyframes textMove {
+            0% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+            100% { transform: translateY(0); }
+        }
+        .move {
+            animation: shake 0.5s ease infinite;
+            background-color: yellow;
+            color: red;
+            transform: scale(1.2);
+        }
+        .overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 999;
+        }
+        .popup {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) scale(0.8);
+            background: purple;
+            color: white;
+            padding: 40px;
+            border-radius: 20px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+            z-index: 1000;
+            width: 60%;
+            max-width: 500px;
+            opacity: 0;
+            transition: opacity 0.5s ease, transform 0.5s ease;
+        }
+        .popup-content {
+            background: white;
+            color: black;
+            padding: 30px;
+            border-radius: 10px;
+            font-size: 32px;
+            margin-bottom: 20px;
+        }
+        .thank-you {
+            font-size: 80px;
+            color: white;
+            text-shadow: 4px 4px 8px black;
+            margin-bottom: 20px;
+            animation: textMove 2s infinite;
+        }
+        .credit {
+            font-size: 30px;
+            color: white;
+            text-shadow: 2px 2px 4px black;
+            margin-top: 20px;
+        }
+        textarea {
+            width: 90%;
+            height: 100px;
+            padding: 10px;
+            border-radius: 10px;
+            border: 1px solid #ccc;
+            font-size: 18px;
+            resize: none;
+            margin-bottom: 20px;
+        }
+        @media (max-width: 600px) {
+            .question {
+                font-size: 50px;
+            }
+
+            button {
+                font-size: 16px;
+                padding: 8px 16px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <video autoplay muted loop id="backgroundVideo">
+        <source src="background-video.mp4" type="video/mp4">
+    </video>
+
+    <div class="intro" id="intro">
+        <h1>Helu cậu</h1>
+        <button onclick="startConfession()">Hi</button>
+    </div>
+
+    <div class="container" id="confession" style="opacity: 0; display: none; transform: scale(0.8);">
+        <div class="question">Bạn có thik tớ hok? ^^</div>
+        <div class="buttons">
+            <button id="yes" onclick="showPopup()">Mik thik lắm <3</button>
+            <button id="no">Mơ à:)</button>
+        </div>
+    </div>
+
+    <div class="overlay" id="overlay"></div>
+
+    <div class="popup" id="popup">
+        <div class="popup-content">Sao cậu thik mik zzz :></div>
+        <textarea id="reason" placeholder="Viết lý do của cậu vào đây..."></textarea>
+        <button onclick="sendReason()">Gửi cho mik ^^</button>
+    </div>
+
+    <div class="end" id="end" style="opacity: 0; display: none; transform: scale(0.8);">
+        <div class="thank-you">Cảm ơn cậu đã chia sẻ</div>
+        <button onclick="share()">Chia sẻ</button>
+        <button onclick="shareFacebook()">Chia sẻ qua Facebook</button>
+        <button onclick="shareZalo()">Chia sẻ qua Zalo</button>
+        <div class="credit">Credit: Nguyễn Đại Phúc</div>
+    </div>
+
+    <audio id="clickSound" src="click.mp3"></audio>
+    <audio id="backgroundMusic" src="romantic-music.mp3" loop></audio>
+    <script src="https://cdn.jsdelivr.net/npm/fireworks-js@2.0.0/dist/fireworks.min.js"></script>
+
+    <script>
+        const noButton = document.getElementById("no");
+        const yesButton = document.getElementById("yes");
+        const confession = document.getElementById("confession");
+        const clickSound = document.getElementById("clickSound");
+        const backgroundMusic = document.getElementById("backgroundMusic");
+
+        function playSound() {
+            clickSound.play();
+        }
+
+        function moveNoButton() {
+            const maxX = window.innerWidth - noButton.offsetWidth - 20;
+            const maxY = window.innerHeight - noButton.offsetHeight - 20;
+            
+            let newX = Math.floor(Math.random() * maxX);
+            let newY = Math.floor(Math.random() * maxY);
+            
+            noButton.style.left = `${newX}px`;
+            noButton.style.top = `${newY}px`;
+
+            yesButton.style.transform = 'scale(2)';
+            yesButton.style.left = `${(window.innerWidth - yesButton.offsetWidth) / 2}px`;
+            yesButton.style.top = `${(window.innerHeight - yesButton.offsetHeight) / 2}px`;
+            yesButton.style.animation = 'lightEffect 1.5s infinite';
+
+            noButton.classList.add("move");
+            setTimeout(() => noButton.classList.remove("move"), 500);
+        }
+
+        function initButtonPositions() {
+            const startX = window.innerWidth * 0.3;
+            const startY = window.innerHeight * 0.5;
+            yesButton.style.left = `${startX}px`;
+            yesButton.style.top = `${startY}px`;
+            noButton.style.left = `${window.innerWidth * 0.6}px`;
+            noButton.style.top = `${startY}px`;
+        }
+
+        function startConfession() {
+            const intro = document.getElementById("intro");
+            intro.style.opacity = '0';
+            setTimeout(() => {
+                intro.style.display = 'none';
+                confession.style.display = 'block';
+                setTimeout(() => {
+                    confession.style.opacity = '1';
+                    confession.style.transform = 'scale(1)';
+                }, 50);
+                initButtonPositions();
+            }, 500);
+        }
+
+        function showPopup() {
+            const popup = document.getElementById("popup");
+            const overlay = document.getElementById("overlay");
+            overlay.style.display = 'block';
+            popup.style.display = 'block';
+            setTimeout(() => {
+                popup.style.opacity = '1';
+                popup.style.transform = 'translate(-50%, -50%) scale(1)';
+            }, 50);
+        }
+
+        function sendReason() {
+            const reasonTextarea = document.getElementById("reason");
+            reasonTextarea.value = "Vì cậu quá cute nên mik thik :>";
+            alert(`Cảm ơn cậu nha ^^ : ${reasonTextarea.value}`);
+            document.getElementById("popup").style.display = 'none';
+            document.getElementById("overlay").style.display = 'none';
+            showEnd();
+        }
+
+        function showEnd() {
+            const confession = document.getElementById("confession");
+            const end = document.getElementById("end");
+            confession.style.opacity = '0';
+            setTimeout(() => {
+                confession.style.display = 'none';
+                end.style.display = 'block';
+                setTimeout(() => {
+                    end.style.opacity = '1';
+                    end.style.transform = 'scale(1)';
+                    backgroundMusic.play();
+                    showFireworks();
+                }, 50);
+            }, 500);
+        }
+
+        function showFireworks() {
+            const container = document.getElementById('end');
+            const fireworks = new Fireworks(container, {
+                speed: 2,
+                acceleration: 1.05,
+                friction: 0.98,
+                gravity: 1.5,
+                particles: 50,
+                trace: 3,
+                explosion: 5,
+                boundaries: {
+                    top: 50,
+                    bottom: container.clientHeight,
+                    left: 50,
+                    right: container.clientWidth
+                },
+                sound: {
+                    enable: true,
+                    list: [
+                        'https://cdn.jsdelivr.net/npm/fireworks-js@2.0.0/dist/sounds/explosion0.mp3',
+                        'https://cdn.jsdelivr.net/npm/fireworks-js@2.0.0/dist/sounds/explosion1.mp3'
+                    ]
+                }
+            });
+            fireworks.start();
+            setTimeout(() => fireworks.stop(), 5000); // Dừng pháo hoa sau 5 giây
+        }
+
+        function share() {
+            const url = window.location.href;
+            const text = "Hãy xem trang web tỏ tình dễ thương này!";
+            if (navigator.share) {
+                navigator.share({
+                    title: 'Trang web tỏ tình',
+                    text: text,
+                    url: url,
+                }).then(() => {
+                    console.log('Thanks for sharing!');
+                }).catch(console.error);
+            } else {
+                alert('Trình duyệt của bạn không hỗ trợ chia sẻ.');
+            }
+        }
+
+        function shareFacebook() {
+            const url = window.location.href;
+            const facebookShareUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`;
+            window.open(facebookShareUrl, '_blank');
+        }
+
+        function shareZalo() {
+            const url = window.location.href;
+            const zaloShareUrl = `https://zalo.me/share?url=${encodeURIComponent(url)}`;
+            window.open(zaloShareUrl, '_blank');
+        }
+
+        window.onload = initButtonPositions;
+        noButton.addEventListener("click", moveNoButton);
+        yesButton.addEventListener("click", playSound);
+        noButton.addEventListener("click", playSound);
+    </script>
+</body>
+</html>
